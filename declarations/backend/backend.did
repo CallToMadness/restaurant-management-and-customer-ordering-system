@@ -1,0 +1,166 @@
+type UserRole = 
+ variant {
+   admin;
+   guest;
+   user;
+ };
+type UserProfile = record {name: text;};
+type TableId = text;
+type Table = 
+ record {
+   active: bool;
+   customerLink: text;
+   id: TableId;
+   location: text;
+   name: text;
+ };
+type RestaurantIdentityId = text;
+type RestaurantId = text;
+type Restaurant = 
+ record {
+   address: text;
+   colorScheme: ColorScheme;
+   components: vec Component;
+   description: text;
+   id: RestaurantId;
+   identityId: RestaurantIdentityId;
+   manager: principal;
+   name: text;
+   tables: vec Table;
+ };
+type OrderStatus = 
+ variant {
+   ordered;
+   paid;
+   processed;
+   readyToServe;
+   served;
+   toBePaid;
+ };
+type OrderItem = 
+ record {
+   category: EmployeeCategory;
+   componentId: ComponentId;
+   menuItemId: MenuItemId;
+   quantity: nat;
+ };
+type OrderId = nat;
+type OrderBatch = 
+ record {
+   customerId: opt principal;
+   id: OrderId;
+   items: vec OrderItem;
+   restaurantId: RestaurantId;
+   status: OrderStatus;
+   tableId: TableId;
+   timestamp: int;
+ };
+type MenuItemId = text;
+type MenuItem = 
+ record {
+   category: text;
+   componentId: ComponentId;
+   description: text;
+   id: MenuItemId;
+   name: text;
+   price: nat;
+   routedBy: EmployeeCategory;
+ };
+type EmployeeRole = 
+ variant {
+   bar;
+   kitchen;
+   waiter;
+ };
+type EmployeeId = text;
+type EmployeeCategory = 
+ variant {
+   bar;
+   kitchen;
+   waiter;
+ };
+type Employee = 
+ record {
+   accessCode: AccessCode;
+   id: EmployeeId;
+   name: text;
+   "principal": opt principal;
+   role: EmployeeRole;
+ };
+type ComponentId = text;
+type Component = 
+ record {
+   description: text;
+   id: ComponentId;
+   name: text;
+ };
+type ColorScheme = 
+ record {
+   accentColor: text;
+   primaryColor: text;
+   secondaryColor: text;
+ };
+type CanisterId = text;
+type AccessCodeData = 
+ record {
+   code: AccessCode;
+   createdAt: int;
+   employeeId: opt EmployeeId;
+   expiresAt: opt int;
+   isActive: bool;
+   restaurantId: opt RestaurantId;
+   role: UserRole;
+ };
+type AccessCode = text;
+service : {
+  addEmployee: (restaurantId: RestaurantId, employee: Employee) -> ();
+  addMenuItem: (restaurantId: RestaurantId, menuItem: MenuItem) -> ();
+  assignCallerUserRole: (user: principal, role: UserRole) -> ();
+  assignRestaurantToCanister: (restaurantId: RestaurantId, canisterId:
+   CanisterId) -> ();
+  claimAccessCode: (code: AccessCode) -> ();
+  createRestaurant: (restaurant: Restaurant) -> ();
+  deactivateAccessCode: (code: AccessCode) -> ();
+  deleteEmployee: (restaurantId: RestaurantId, employeeId: EmployeeId) -> ();
+  deleteMenuItem: (restaurantId: RestaurantId, menuItemId: MenuItemId) -> ();
+  deleteTable: (restaurantId: RestaurantId, tableId: TableId) -> ();
+  generateAccessCode: (role: UserRole, restaurantId: opt RestaurantId,
+   employeeId: opt EmployeeId) -> (AccessCode);
+  getAccessCodesByRestaurant: (restaurantId: RestaurantId) ->
+   (vec AccessCodeData) query;
+  getAllRestaurants: () -> (vec Restaurant) query;
+  getAvailableAccessCodes: (identityId: RestaurantIdentityId) ->
+   (vec AccessCode) query;
+  getCallerUserProfile: () -> (opt UserProfile) query;
+  getCallerUserRole: () -> (UserRole) query;
+  getCanisterForRestaurant: (restaurantId: RestaurantId) ->
+   (opt CanisterId) query;
+  getCustomerOrderHistory: () -> (vec OrderBatch) query;
+  getEmployees: (restaurantId: RestaurantId) -> (vec Employee) query;
+  getMenuItems: (restaurantId: RestaurantId) -> (vec MenuItem) query;
+  getOrder: (orderId: OrderId) -> (opt OrderBatch) query;
+  getOrdersForRestaurant: (restaurantId: RestaurantId) ->
+   (vec OrderBatch) query;
+  getRestaurant: (restaurantId: RestaurantId) -> (opt Restaurant) query;
+  getUserProfile: (user: principal) -> (opt UserProfile) query;
+  getValidAccessCodesForRestaurant: (restaurantId: RestaurantId) ->
+   (vec AccessCodeData) query;
+  initializeAccessControl: () -> ();
+  isCallerAdmin: () -> (bool) query;
+  placeOrder: (order: OrderBatch) -> (OrderId);
+  saveCallerUserProfile: (profile: UserProfile) -> ();
+  setCustomAccessCode: (restaurantId: RestaurantId, employeeId: EmployeeId,
+   customCode: AccessCode) -> ();
+  updateAccessCode: (code: AccessCode) -> (AccessCode);
+  updateRestaurant: (restaurant: Restaurant) -> ();
+  validateRestaurantIdentityId: (identityId: RestaurantIdentityId) ->
+   (bool) query;
+  verifyAccessCode: (code: AccessCode) ->
+   (record {
+      employeeId: opt EmployeeId;
+      error: text;
+      isValid: bool;
+      restaurantId: opt RestaurantId;
+      role: opt UserRole;
+    }) query;
+}
